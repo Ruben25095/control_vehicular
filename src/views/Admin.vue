@@ -2,7 +2,7 @@
   <div class="min-h-screen  bg-gray-300">
    
     <AppHeader/>
-    <h1 class="text-3xl font-bold text-center text-black ">Panel de Reservas</h1>
+   <div class="flex flex-row items-center justify-center "> <h1 class="text-black text-7xl">Solicitudes de Salida</h1></div>
     <!-- Aquí llamas a tu componente -->
     <ReservasList  />
   </div>

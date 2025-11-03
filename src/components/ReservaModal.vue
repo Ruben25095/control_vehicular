@@ -19,45 +19,25 @@ const props = defineProps({
   
 })
 
-/*     id_reserva:'',
-   fecha_inicio: '',
-    fecha_fin: '',
-    estado: 'pendiente',
-    img_vehiculo:'',
-    aprovado_por:'NULL',
-    usuario_id:'',
-    id_num_economico:'',
-    id_vehiculo:'',
-    motivo:'',
-     */
+
 
 
 // Emitir eventos al componente padre
 const emit = defineEmits(['close', 'submit'])
 
 // Datos del formulario
-const form = ref({
-  
-   fecha_inicio: '',
-    fecha_fin: '',
-    motivo:'',
-  
-  
-  })
-//reset form cuando se abre el modal
-const resetForm = () => {
-  form.value = {
-    fecha_inicio: '',
-    fecha_fin: '',
-    motivo:'',
-  }
-}
 
+  
+ const fecha_inicio=ref('')
+ const fecha_fin= ref('')
+ const motivo=ref('')
+  
  
-// 3. Cargar el ID del usuario al montar (para resolver el Foreign Key anterior)
-
-// Calcular fecha actual
-
+ const resetForm = () => {
+  fecha_inicio.value = ''
+  fecha_fin.value = ''
+  motivo.value = ''
+}
 
 // Cerrar modal
 const closeModal = () => {
@@ -76,16 +56,22 @@ const currentUser = computed(() => {
     avatarUrl: user.value.user_metadata?.avatar_url || '',
   }
 })
-
-
-
-
-
+//Realizar reserva 
+const currentUserId = ref(null);
 
 const hoy = ref('')
 const finSemana = ref('')
 
-onMounted(() => {
+onMounted(async () => {
+  try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+          currentUserId.value = user.id;
+      }
+  } catch (e) {
+      console.error("Error al cargar el usuario: ", e);
+  }
+
  
   const hoyFecha = new Date()
 
@@ -97,6 +83,82 @@ onMounted(() => {
   fin.setDate(hoyFecha.getDate() + (7 - hoyFecha.getDay()))
   finSemana.value = fin.toISOString().split('T')[0]
 })
+
+const isReserving = ref(false) 
+const isSubmitting = ref(false)
+const successMessage = ref('')
+const errorMessage = ref('')
+
+/**
+ * Inserta la reserva en la tabla 'reservas' de Supabase.
+ */
+ async function realizarReserva() {
+  if (!fecha_inicio.value || !fecha_fin.value) {
+    errorMessage.value = 'Debes seleccionar ambas fechas.'
+    return
+  }
+
+  if (new Date(fecha_inicio.value) > new Date(fecha_fin.value)) {
+    errorMessage.value = 'La fecha de inicio no puede ser posterior a la de fin.'
+    return
+  }
+
+  isSubmitting.value = true
+  errorMessage.value = ''
+  successMessage.value = ''
+
+  const nuevaReserva = {
+    usuario_id: currentUserId.value,
+    //vehiculo_id: props.vehiculo.vehiculo_id,
+    fecha_inicio: fecha_inicio.value,
+    fecha_fin: fecha_fin.value,
+     estado: 'Pendiente',
+     img_vehiculo: props.vehiculo.img_url,
+    aprovado_por:'',
+    id_num_economico:props.vehiculo.id_num_economico,
+    id_vehiculo:props.vehiculo.id_vehiculo,
+    motivo:motivo.value,
+  }
+
+  try {
+    // 1️⃣ Insertar en reservas
+    const { data: reservaData, error: reservaError } = await supabase
+      .from('reservas')
+      .insert([nuevaReserva])
+      .select()
+
+    if (reservaError) throw reservaError
+
+    // 2️⃣ Actualizar estado del vehículo (ejemplo: marcar como no disponible)
+    const { error: vehiculoError } = await supabase
+      .from('vehiculos')
+      .update({ disponible: false })
+      .eq('id_vehiculo', nuevaReserva.id_vehiculo)
+
+    if (vehiculoError) throw vehiculoError
+
+    successMessage.value = `Reserva creada con éxito! ID: ${reservaData[0].id}`
+        
+    setTimeout(() => {
+      isReserving.value = false
+      resetForm()
+      closeModal()
+    },1000)
+
+  } catch (err) {
+    console.error('Error al crear la reserva:', err)
+    errorMessage.value = `Error al crear la reserva: ${err.message}`
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+
+
+
+
+
+
 
 
 
@@ -110,16 +172,16 @@ onMounted(() => {
 
 
 <template>
-    <div v-if="isOpen" class="fixed inset-0 bg-gray-400 bg-opacity-40 flex justify-center items-center z-50">
-        <div class="bg-white rounded-2xl shadow-xl p-6 w-1/2 h-3/4   relative">
+    <div v-if="isOpen" class="fixed  inset-0 bg-gray-400 bg-opacity-40 flex justify-center items-center placce-cente z-50">
+        <div class="flex flex-col  bg-white rounded-2xl shadow-xl p-6 w-1/4 h-7/12  relative">
             <!-- Botón de cerrar -->
             <button @click="closeModal" class="absolute top-3 text-3xl right-3 text-red-500 hover:text-blue-700">
                 ✕
               </button>
     
-            <h2 class="text-2xl text-black font-bold mb-4 text-center">Nueva Solicitud de Salida</h2>
+            <h2 class="flex  justify-center text-2xl text-black font-bold mb-4 text-center">Nueva Solicitud de Salida</h2>
             <div class="w-full flex flex-col items-center mb-4">
-                <img :src="vehiculo.img_url" alt="Ícono de vehículo" class="flex w-1/4  h-1/4 mx-auto mb-2" />
+                <img :src="vehiculo.img_url" alt="Ícono de vehículo" class="flex w-2/4  h-3/4  mb-2" />
               
                 <h1 class="text-black text-2xl">{{currentUser.email}}</h1>
 
@@ -128,36 +190,35 @@ onMounted(() => {
             </div>
     
     
-            <form @submit.prevent="enviarSolicitud" class="space-y-4">
-    
-    
+           
                 <!-- Fecha de inicio -->
                 <div class="flex flex-col items-center">
                     <label class="block text-black font-semibold mb-1">Fecha de Salida</label>
-                    <input v-model="form.fecha_inicio" type="date"id="fecha_inicio" :min="hoy" class="w-11/12 border text-black text-2xl rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300" required />
+                    <input v-model="fecha_inicio" type="date"id="fecha_inicio" :min="hoy" class="w-11/12 border text-black text-2xl rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300" required />
                 </div>
 
                   <!-- Fecha final -->
                   <div class="flex flex-col items-center">
                     <label class="block text-black font-semibold mb-1">Fecha final</label>
-                    <input v-model="form.fecha_fin" type="date"id="fecha_inicio" :min="hoy"  class="w-11/12 border justify-center text-black text-2xl rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300" required />
+                    <input v-model="fecha_fin" type="date"id="fecha_fin" :min="hoy"  class="w-11/12 border justify-center text-black text-2xl rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300" required />
                 </div>
     
     
                 <!-- Motivo -->
                 <div class="flex flex-col items-center">
                     <label class="block  text-black font-semibold mb-1">Motivo</label>
-                    <textarea v-model="form.motivo" rows="6"  class="w-11/12 h-full   text-black border-2 border-blue-600 rounded-lg px-3 py-2 text-2xl focus:outline-none focus:ring focus:ring-blue-300" 
+                    <textarea v-model="motivo" rows="3" cols="50" maxlength="120" class="w-11/12 h-full   text-black border-2 border-blue-600 rounded-lg px-3 py-2 text-2xl focus:outline-none focus:ring focus:ring-blue-300" 
                     placeholder="Describe el motivo de la reserva..." required></textarea>
                 </div>
+                
     
                 <!-- Botón enviar --> 
-                <div class="flex justify-center">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                <div class="flex w-full h-20 justify-center-safe my-15 mx-20 place-items-center-safe">
+                    <button @click="realizarReserva"  class="flex justify-center items-center  w-40 h-10  bg-blue-600 hover:bg-lime-400 text-white hover:text-black rounded-lg">
                     Enviar solicitud
                   </button>
                 </div>
-            </form>
+         
         </div>
     </div>
 </template>

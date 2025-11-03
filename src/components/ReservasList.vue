@@ -1,6 +1,6 @@
 <template>
   <div class="p-6">
-    <h2 class="text-2xl font-bold mb-4 text-black">Listado de Reservas</h2>
+
 
     <!-- Mostrar mensaje si no hay reservas -->
     <div v-if="reservas.length === 0" class="text-black">
@@ -8,52 +8,136 @@
     </div>
 
     <!-- Lista de reservas -->
-    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div v-else class="grid gap-4 md:grid-cols-2 place-items-center-safe lg:grid-cols-4">
       <div
         v-for="reserva in reservas"
         :key="reserva.id"
-        class="bg-gray text-black rounded-xl shadow-md p-4 hover:shadow-lg transition"
+        class="bg-gray-100 w-11/12  text-black place-items-center rounded-xl shadow-md p-4 hover:shadow-lg transition"
       >
-        <h3 class=" bg-sky-300 font-semibold text-lg mb-2">
-          Reserva #{{ reserva.id_reserva }}
+        <h3 class=" w-full text-center bg-sky-300 font-semibold  text-lg mb-2 p-1 rounded">
+          Reserva #{{ reserva.id }}
         </h3>
-        <p><strong>Usuario:</strong> {{ reserva.usuario.nombre }}</p>
-        <p><strong>Vehículo:</strong> {{ reserva.vehiculo.marca }} {{ reserva.vehiculo.modelo }}</p>
-        <p><strong>Fecha inicio:</strong> {{ formatFecha(reserva.fecha_inicio) }}</p>
-        <p><strong>Fecha fin:</strong> {{ formatFecha(reserva.fecha_fin) }}</p>
+        
+        <p><strong>No.Economico:</strong> {{  reserva.vehiculo?.id_num_economico || 'Desconocido' }}</p>
        
-        <p><strong>Estado:</strong> {{ reserva.estado }}</p>
-      </div>
+        <div v-if="reserva.vehiculo?.img_url" class="flex justify-center my-2">
+          <img :src="reserva.vehiculo.img_url" alt="Vehículo" class="w-32 h-24 object-cover rounded-lg" />
+        </div>
+        <p><strong>Usuario:</strong> {{ reserva.usuario?.nombre || reserva.usuario?.nombre_user || 'Desconocido' }}</p>
+        <p><strong>Vehículo:</strong> {{ reserva.vehiculo?.marca }} {{ reserva.vehiculo?.modelo }}</p>
+        <p><strong>Fecha inicio:</strong> {{ formatFecha(reserva.fecha_inicio) }}</p>
+         <p><strong>Fecha fin:</strong> {{ formatFecha(reserva.fecha_fin) }}</p>
+        <p class="overflow-hidden w-80 ..."><strong>Motivo:</strong> {{ reserva.motivo }}</p> 
+        <p><strong>Estado:</strong> 
+        
+          <span :class="{
+            'text-green-600': reserva.estado === 'Aprobada',
+            'text-yellow-500': reserva.estado === 'Pendiente',
+            'text-red-600': reserva.estado === 'Rechazada'
+          }">
+            {{ reserva.estado }}
+
+  
+          </span>
+      </p>
+
+         <div class=" flex flex-row w-full place-items-center justify-around ">
+
+               <button @click="validar(reserva.id,currentUser.name)" class="flex p-6 h-1/4 w-1/4 border-2 justify-center bg-green-500 hover:bg-yellow-300">Aceptar</button>
+
+
+               <button class="flex p-6 h-1/4 w-1/4 border-2 justify-center bg-red-500 hover:bg-yellow-300">Rechazar</button>
+
+         </div>
+
+
     </div>
+    
+    
+       
+
+      
+
+
+
+
+    </div>
+
+
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { supabase } from '@/lib/supabase' // Ajusta la ruta según tu proyecto
-
+import { ref, onMounted,computed,watchEffect } from 'vue'
+import { supabase } from '@/lib/supabase'
+import {useAuth} from '@/components/useAuth'
 const reservas = ref([])
 
-// Función para formatear fechas
+// Dentro de tu componente o script donde defines currentUser
+const { user } = useAuth()
+const usuario= ref(null) // Usaremos una ref para almacenar el nombre
+
+watchEffect(async () => {
+  if (user.value) {
+    // 1. Obtener el ID del usuario autenticado
+    const userId = user.value.id
+    
+    // 2. Realizar la consulta a la tabla 'profiles'
+    const { data, error } = await supabase
+      .from('profiles') // Tu tabla de perfiles
+      .select('nombre_user') // La columna que contiene el nombre
+      .eq('id', userId) // Asume que la columna ID de 'profiles' se llama 'id' y es igual al ID de auth
+      .single() // Esperamos un solo resultado
+
+    if (error) {
+      console.error('Error al obtener el perfil:', error)
+      usuario.value = 'Error'
+    } else if (data) {
+      // 3. Almacenar el nombre obtenido
+      usuario.value = data.nombre_user
+    }
+  } else {
+    usuario.value = null
+  }
+})
+
+const currentUser = computed(() => {
+  if (!user.value) return null
+  
+  // Opción 1: Priorizar el nombre de la base de datos (nameFromDB)
+  const nombre = usuario.value || 'Sin nombre'
+  
+  
+  return {
+    name: nombre, 
+    email: user.value.email,
+    avatarUrl: user.value.user_metadata?.avatar_url || '',
+  }
+})
+
+console.log(currentUser.name)
+
 function formatFecha(fecha) {
   return new Date(fecha).toLocaleDateString()
 }
 
-// Cargar las reservas con relaciones
 const cargarReservas = async () => {
   const { data, error } = await supabase
     .from('reservas')
     .select(`
       id,
-      id_reserva,
       fecha_inicio,
       fecha_fin,
-
       estado,
-      usuario:usuario_id (nombre, email),
-      vehiculo:vehiculo_id (marca, modelo, imagen_url)
+      motivo,
+      aprovado_por,
+      usuario:usuario_id (nombre_user, email),
+      vehiculo:id_vehiculo (marca, modelo, img_url,id_num_economico)
+     
     `)
-    .order('created_at', { ascending: false })
+    .eq('estado','Pendiente')
+    .order('id', { ascending: true })
+  
 
   if (error) {
     console.error('Error cargando reservas:', error)
@@ -61,12 +145,46 @@ const cargarReservas = async () => {
     reservas.value = data
   }
 }
-console.log(reservas)
+
+
+const errorMsg = ref('')
+
+async function validar(idReserva,name) {
+
+  try {
+    const { error } = await supabase
+      .from('reservas')
+      .update({ estado:'Aprobada',aprovado_por:name})
+      .eq('id', idReserva,'id', idReserva)
+
+    if (error) throw error
+    console.log(idReserva)
+    await cargarReservas()
+  } catch (err) {
+    console.error('Error al aprobar reserva:', err)
+    errorMsg.value = 'No se pudo aprobar la reserva.'
+  }
+}
+
+async function rechazar(idReserva) {
+  try {
+    const { error } = await supabase
+      .from('reservas')
+      .update({ estado: 'Rechazada' })
+      .eq('id', idReserva)
+
+    if (error) throw error
+
+    await cargarReservas()
+  } catch (err) {
+    console.error('Error al rechazar reserva:', err)
+    errorMsg.value = 'No se pudo rechazar la reserva.'
+  }
+}
+
+
 onMounted(() => {
   cargarReservas()
+ 
 })
 </script>
-
-<style scoped>
-/* Pequeños estilos opcionales */
-</style>

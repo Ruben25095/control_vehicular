@@ -5,12 +5,21 @@
     <form @submit.prevent="handleSignUp">
       <div>
         <input 
+          v-model="name" 
+          type="name" 
+          placeholder="Nombre"
+          required
+        />
+      </div>
+      <div>
+        <input 
           v-model="email" 
           type="email" 
           placeholder="Email"
           required
         />
       </div>
+    
       
       <div>
         <input 
@@ -60,6 +69,7 @@ const { signUp } = useAuth()
 
 const email = ref('')
 const password = ref('')
+const name=ref('')
 const confirmPassword = ref('') // ⬅️ Nuevo ref para la confirmación
 const error = ref(null)
 const isLoading = ref(false)

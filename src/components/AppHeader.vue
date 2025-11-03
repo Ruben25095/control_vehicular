@@ -68,6 +68,8 @@ const supaUser = ref(null) // usuario autenticado desde Supabase
 
 // --- Verificar sesión activa ---
 onMounted(async () => {
+
+
   const { data: { session } } = await supabase.auth.getSession()
   supaUser.value = session?.user ?? null
 
@@ -121,6 +123,25 @@ function onClickOutside(e) {
   if (!userBtn.value) return
   if (!userBtn.value.contains(e.target)) closeMenu()
 }
+
+const getprofile = async () => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', supaUser.value.id)
+    .single()
+
+  if (error) {
+    console.error('Error fetching profile:', error)
+    return null
+  }
+  return data
+}
+
+
+
+
+
 </script>
 
 

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { authService } from '../services/authService'
-
+import {supabase} from '@/lib/supabase'
 export const useAuthStore = defineStore('auth', {
   state: () => {
     // 1. Cargar datos de localStorage al INICIO del store
@@ -34,7 +34,7 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     currentUser: (state) => state.user,
-    userRole: (state) => state.user?.role || null,
+    userRole: (state) => state.user?.role || null ,
     isAdmin: (state) => state.user?.role === 'admin',
     isModerator: (state) => state.user?.role === 'moderator',
     userName: (state) => state.user?.name || ''
