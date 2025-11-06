@@ -3,6 +3,12 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { supabase } from '@/lib/supabase' 
 import {useAuth} from '@/components/useAuth'
+const isLoading = ref(false)
+
+
+
+
+
 const props = defineProps({
     isOpen: {
         type: Boolean,
@@ -37,6 +43,7 @@ const emit = defineEmits(['close', 'submit'])
   fecha_inicio.value = ''
   fecha_fin.value = ''
   motivo.value = ''
+  isLoading.value = false 
 }
 
 // Cerrar modal
@@ -106,7 +113,7 @@ const errorMessage = ref('')
   isSubmitting.value = true
   errorMessage.value = ''
   successMessage.value = ''
-
+  isLoading.value = true
   const nuevaReserva = {
     usuario_id: currentUserId.value,
     //vehiculo_id: props.vehiculo.vehiculo_id,
@@ -141,15 +148,18 @@ const errorMessage = ref('')
         
     setTimeout(() => {
       isReserving.value = false
-      resetForm()
+     
       closeModal()
     },1000)
-
+    //resetForm()
   } catch (err) {
     console.error('Error al crear la reserva:', err)
+    isLoading.value = false 
     errorMessage.value = `Error al crear la reserva: ${err.message}`
   } finally {
+  
     isSubmitting.value = false
+   
   }
 }
 
@@ -173,7 +183,7 @@ const errorMessage = ref('')
 
 <template>
     <div v-if="isOpen" class="fixed  inset-0 bg-gray-400 bg-opacity-40 flex justify-center items-center placce-cente z-50">
-        <div class="flex flex-col  bg-white rounded-2xl shadow-xl p-6 w-1/4 h-7/12  relative">
+        <div class="flex flex-col  bg-white rounded-2xl shadow-xl p-6 w-1/4 h-9/12  relative">
             <!-- Botón de cerrar -->
             <button @click="closeModal" class="absolute top-3 text-3xl right-3 text-red-500 hover:text-blue-700">
                 ✕
@@ -214,8 +224,8 @@ const errorMessage = ref('')
     
                 <!-- Botón enviar --> 
                 <div class="flex w-full h-20 justify-center-safe my-15 mx-20 place-items-center-safe">
-                    <button @click="realizarReserva"  class="flex justify-center items-center  w-40 h-10  bg-blue-600 hover:bg-lime-400 text-white hover:text-black rounded-lg">
-                    Enviar solicitud
+                    <button :disabled="isLoading" @click="realizarReserva"  class="flex justify-center items-center  w-40 h-10  bg-blue-600 hover:bg-lime-400 text-white hover:text-black rounded-lg">
+                        {{ isLoading ? 'Cargando...' : 'Enviar Solicitud' }}
                   </button>
                 </div>
          

@@ -21,8 +21,10 @@ initAuth()
 
 export const useAuth = () => {
   // Registrar usuario
-  const signUp = async (email, password) => {
-    const { data, error } = await supabase.auth.signUp({ email, password })
+  const signUp = async (email, password,name) => {
+    const { data, error } = await supabase.auth.signUp({ email, password,options: { data: {
+      name: name // La clave 'name' se guarda en los metadatos
+    }} })
     return { data, error }
   }
 

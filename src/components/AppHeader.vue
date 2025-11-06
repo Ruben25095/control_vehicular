@@ -2,14 +2,12 @@
   <nav class="navbar">
     <div class="nav-left">
       <slot name="brand">
-        <a class="brand" href="#">Control Vehicular</a>
+        <a class="brand" href="/">Control Vehicular</a>
       </slot>
       <ul class="nav-links">
         <slot>
           <!-- enlaces por defecto si no hay slot -->
-          <li><a class="text-black" href="#">Inicio</a></li>
-       
-          <li><a href="#">Contacto</a></li>
+        
         </slot>
       </ul>
     </div>
@@ -30,6 +28,8 @@
           <slot name="menu">
             <button class="dropdown-item" @click="$emit('profile')">Perfil</button>
             <button class="dropdown-item" @click="$emit('settings')">Ajustes</button>
+            <button class="dropdown-item"    @click=(gotoadmin)>Admin</button>
+            <button class="dropdown-item"    @click=(gotosalidas)>Salidas</button>
             <hr />
             <button class="dropdown-item logout" @click="handleLogout">Cerrar sesión</button>
           </slot>
@@ -47,10 +47,17 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { supabase } from '@/lib/supabase'  // 👈 importa el cliente
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 const router = useRouter()
 
+
+const auth = useAuthStore()
+
+const isAdmin = computed(() => auth.role === 'Admin')
+
 function goToLogin() {
-  router.push('/login') // 👈 redirige directamente
+  router.push('/login') 
+// 👈 redirige directamente
 }
 
 
@@ -72,7 +79,7 @@ onMounted(async () => {
 
   const { data: { session } } = await supabase.auth.getSession()
   supaUser.value = session?.user ?? null
-
+  console.log(isAdmin)
   // Escuchar cambios en la sesión
   supabase.auth.onAuthStateChange((_event, session) => {
     supaUser.value = session?.user ?? null
@@ -80,6 +87,17 @@ onMounted(async () => {
 
   document.addEventListener('click', onClickOutside)
 })
+
+const gotoadmin=()=>{
+  router.push('/admin')
+
+}
+const gotosalidas=()=>{
+  router.push('/salidas')
+
+}
+
+
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', onClickOutside)
@@ -124,19 +142,8 @@ function onClickOutside(e) {
   if (!userBtn.value.contains(e.target)) closeMenu()
 }
 
-const getprofile = async () => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', supaUser.value.id)
-    .single()
 
-  if (error) {
-    console.error('Error fetching profile:', error)
-    return null
-  }
-  return data
-}
+
 
 
 

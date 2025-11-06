@@ -19,7 +19,6 @@
           required
         />
       </div>
-    
       
       <div>
         <input 
@@ -49,16 +48,6 @@
 </template>
 
 
-
-
-
-
-
-
-
-
-
-
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -69,7 +58,7 @@ const { signUp } = useAuth()
 
 const email = ref('')
 const password = ref('')
-const name=ref('')
+const name = ref('') // ⬅️ Nuevo ref para el nombre
 const confirmPassword = ref('') // ⬅️ Nuevo ref para la confirmación
 const error = ref(null)
 const isLoading = ref(false)
@@ -85,7 +74,7 @@ const handleSignUp = async () => {
     return
   }
   
-  const { data, error: signUpError } = await signUp(email.value, password.value)
+  const { data, error: signUpError } = await signUp(email.value, password.value,name.value)
   
   isLoading.value = false
   

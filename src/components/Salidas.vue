@@ -1,36 +1,9 @@
 <template>
-  <div class="p-6">
+  <div class=" bg-gray-300 p-6">
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-    
 
     <!-- Mostrar mensaje si no hay reservas -->
-    <div v-if="reservas.length === 0" class="text-black">
+    <div v-if="reservas.length === 0" class="text-black place-justify-center"    >
       No hay reservas registradas.
     </div>
 
@@ -49,7 +22,7 @@
         <div v-if="reserva.vehiculo?.img_url" class="flex justify-center my-2">
           <img :src="reserva.vehiculo.img_url" alt="Vehículo" class="w-32 h-24 object-cover rounded-lg" />
         </div>
-        <p><strong>Usuario:</strong> {{ reserva.usuario?.nombre || reserva.usuario?.nombre_user || 'Desconocido' }}</p>
+        <p><strong>Usuario:</strong> {{ reserva.usuario?.nombre || reserva.usuario?.name || 'Desconocido' }}</p>
         <p><strong>Autorizo:</strong> {{  reserva.aprovado_por || 'Desconocido' }}</p>
         <p><strong>Vehículo:</strong> {{ reserva.vehiculo?.marca }} {{ reserva.vehiculo?.modelo }}</p>
         <p><strong>Fecha inicio:</strong> {{ formatFecha(reserva.fecha_inicio) }}</p>
@@ -64,7 +37,7 @@
           }">
             {{ reserva.estado }}
 
-  
+            
           </span>
       </p>
 
@@ -105,7 +78,7 @@ const cargarReservas = async () => {
       fecha_fin,
       estado,
       aprovado_por,
-      usuario:usuario_id (nombre_user, email),
+      usuario:usuario_id (name,email),
       vehiculo:id_vehiculo (marca, modelo, img_url,id_num_economico)
     `)
     .eq('estado','Aprobada')
@@ -117,6 +90,21 @@ const cargarReservas = async () => {
   } else {
     reservas.value = data
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
 }
 
 onMounted(() => {

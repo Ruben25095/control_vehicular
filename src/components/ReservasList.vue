@@ -23,7 +23,7 @@
         <div v-if="reserva.vehiculo?.img_url" class="flex justify-center my-2">
           <img :src="reserva.vehiculo.img_url" alt="Vehículo" class="w-32 h-24 object-cover rounded-lg" />
         </div>
-        <p><strong>Usuario:</strong> {{ reserva.usuario?.nombre || reserva.usuario?.nombre_user || 'Desconocido' }}</p>
+        <p><strong>Solicita:</strong> {{ reserva.usuario?.nombre || reserva.usuario?.name || 'Desconocido' }}</p>
         <p><strong>Vehículo:</strong> {{ reserva.vehiculo?.marca }} {{ reserva.vehiculo?.modelo }}</p>
         <p><strong>Fecha inicio:</strong> {{ formatFecha(reserva.fecha_inicio) }}</p>
          <p><strong>Fecha fin:</strong> {{ formatFecha(reserva.fecha_fin) }}</p>
@@ -46,7 +46,7 @@
                <button @click="validar(reserva.id,currentUser.name)" class="flex p-6 h-1/4 w-1/4 border-2 justify-center bg-green-500 hover:bg-yellow-300">Aceptar</button>
 
 
-               <button class="flex p-6 h-1/4 w-1/4 border-2 justify-center bg-red-500 hover:bg-yellow-300">Rechazar</button>
+               <button @click="rechazar(reserva.id,currentUser.name)" class="flex p-6 h-1/4 w-1/4 border-2 justify-center bg-red-500 hover:bg-yellow-300">Rechazar</button>
 
          </div>
 
@@ -85,7 +85,7 @@ watchEffect(async () => {
     // 2. Realizar la consulta a la tabla 'profiles'
     const { data, error } = await supabase
       .from('profiles') // Tu tabla de perfiles
-      .select('nombre_user') // La columna que contiene el nombre
+      .select('name') // La columna que contiene el nombre
       .eq('id', userId) // Asume que la columna ID de 'profiles' se llama 'id' y es igual al ID de auth
       .single() // Esperamos un solo resultado
 
@@ -94,7 +94,7 @@ watchEffect(async () => {
       usuario.value = 'Error'
     } else if (data) {
       // 3. Almacenar el nombre obtenido
-      usuario.value = data.nombre_user
+      usuario.value = data.name
     }
   } else {
     usuario.value = null
@@ -131,7 +131,7 @@ const cargarReservas = async () => {
       estado,
       motivo,
       aprovado_por,
-      usuario:usuario_id (nombre_user, email),
+      usuario:usuario_id (name, email),
       vehiculo:id_vehiculo (marca, modelo, img_url,id_num_economico)
      
     `)
@@ -166,11 +166,11 @@ async function validar(idReserva,name) {
   }
 }
 
-async function rechazar(idReserva) {
+async function rechazar(idReserva,name) {
   try {
     const { error } = await supabase
       .from('reservas')
-      .update({ estado: 'Rechazada' })
+      .update({ estado: 'Rechazada',aprovado_por:name })
       .eq('id', idReserva)
 
     if (error) throw error

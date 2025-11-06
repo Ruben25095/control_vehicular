@@ -15,7 +15,7 @@ async function getvehiculos() {
       .from('vehiculos')
       .select('*')
       .order('id_vehiculo', { ascending: true })
-      //.eq('disponible', true) // opcional: solo disponibles
+      .eq('disponible', true) // opcional: solo disponibles
     if (fetchError) throw fetchError
     vehiculos.value = data
   } catch (err) {
