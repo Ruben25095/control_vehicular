@@ -1,6 +1,6 @@
 <template>
    <AppHeader/>     
-  <div class="login-container">
+  <div class=" bg-black login-container">
     <h2>Iniciar Sesión</h2>
     
     <form @submit.prevent="handleLogin">
@@ -31,7 +31,7 @@
     
     <p>
       ¿No tienes cuenta? 
-      <router-link to="/signup">Registrarse</router-link>
+      
       <router-link to="/forgot-password">Recuperar contraseña</router-link>
     </p>
   </div>

@@ -124,6 +124,7 @@ const errorMessage = ref('')
     aprovado_por:'',
     id_num_economico:props.vehiculo.id_num_economico,
     id_vehiculo:props.vehiculo.id_vehiculo,
+    kilometrage_inicial:props.vehiculo.kilometraje,
     motivo:motivo.value,
   }
 

@@ -30,6 +30,8 @@
             <button class="dropdown-item" @click="$emit('settings')">Ajustes</button>
             <button class="dropdown-item"    @click=(gotoadmin)>Admin</button>
             <button class="dropdown-item"    @click=(gotosalidas)>Salidas</button>
+            <button class="dropdown-item"    @click=(gotomisreservas)>Mis reservas</button>
+            <button class="dropdown-item"    @click=(gotomisreguistrar)>Registrar</button>
             <hr />
             <button class="dropdown-item logout" @click="handleLogout">Cerrar sesión</button>
           </slot>
@@ -96,7 +98,14 @@ const gotosalidas=()=>{
   router.push('/salidas')
 
 }
+const gotomisreservas=()=>{
+  router.push('/mi-solicitud')
 
+}
+const gotomisreguistrar=()=>{
+  router.push('/signup')
+
+}
 
 
 onBeforeUnmount(() => {

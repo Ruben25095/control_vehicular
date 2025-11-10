@@ -33,7 +33,7 @@ const router = createRouter({
       path: '/signup',
       name: 'Signup',
       component: () => import('@/views/Signup.vue'),
-      meta: { requiresAuth:false }
+      meta: {requiresAuth: true, requiresRole: 'Admin' }
     },
     {
       path: '/forgot-password',
@@ -58,9 +58,14 @@ const router = createRouter({
       path: '/salidas',
       name: 'Salidas',
       component: () => import('@/views/salida.vue'),
+      meta: { requiresAuth: true ,requiresRole: 'moderador'}
+    },
+    {
+      path: '/mi-solicitud',
+      name: 'MisSalidas',
+      component: () => import('@/views/Misolicitud.vue'),
       meta: { requiresAuth: true }
     },
-
     
   ]
      
