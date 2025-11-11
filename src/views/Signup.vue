@@ -1,8 +1,9 @@
 <template>
-  <div class="login-container bg-black">
-    <h2>Registrarse</h2>
-    
-    <form @submit.prevent="handleSignUp">
+  <AppHeader />
+  <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+   
+    <div class="flex  w-1/4 min-h-150 items-center-safe   justify-center-safe    bg-black">
+    <form class="flex flex-col w-2/4 " @submit.prevent="handleSignUp">
       <div>
         <input 
           v-model="name" 
@@ -45,6 +46,7 @@
 
     <p v-if="error" class="error">{{ error }}</p>
   </div>
+  </div>
 </template>
 
 
@@ -52,6 +54,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/components/useAuth'
+import AppHeader from '@/components/AppHeader.vue'
 
 const router = useRouter()
 const { signUp } = useAuth()

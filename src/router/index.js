@@ -58,13 +58,19 @@ const router = createRouter({
       path: '/salidas',
       name: 'Salidas',
       component: () => import('@/views/salida.vue'),
-      meta: { requiresAuth: true ,requiresRole: 'moderador'}
+      meta: { requiresAuth: true, requiresRole:['moderador','Admin'] }
     },
     {
       path: '/mi-solicitud',
       name: 'MisSalidas',
       component: () => import('@/views/Misolicitud.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/nuevovehiculo',
+      name: 'NuevoVehiculo',
+      component: () => import('@/components/RegistroVehiculo.vue'),
+      meta: { requiresAuth: true, requiresRole: 'Admin' }
     },
     
   ]
@@ -105,7 +111,7 @@ router.beforeEach(async (to, from, next) => {
       .from('profiles')
       .select('role') // SOLAMENTE necesitamos la columna 'role'
       .eq('id', user.id) // Buscar la fila que coincida con el ID del usuario actual
-      .single() // Esperar solo un resultado
+       .single() // Esperar solo un resultado
       
     if (dbError) {
       console.error('Error al obtener el perfil del usuario:', dbError)
@@ -116,7 +122,7 @@ router.beforeEach(async (to, from, next) => {
     const currentRole = profile?.role || 'user' // Si la consulta devuelve NULL, asumimos el rol 'user'
 
     // B. Verificar si el rol obtenido coincide con el rol requerido
-    if (currentRole !== requiredRole) {
+    if (currentRole !== requiredRole && !(Array.isArray(requiredRole) && requiredRole.includes(currentRole))) {
       alert(`Acceso denegado. Se requiere el rol: ${requiredRole}. Su rol es: ${currentRole}`)
       return next({ path: '/dashboard' }) // Redirigir al dashboard si no tiene el rol
     }

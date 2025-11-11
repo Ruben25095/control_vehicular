@@ -32,6 +32,7 @@
             <button class="dropdown-item"    @click=(gotosalidas)>Salidas</button>
             <button class="dropdown-item"    @click=(gotomisreservas)>Mis reservas</button>
             <button class="dropdown-item"    @click=(gotomisreguistrar)>Registrar</button>
+            <button class="dropdown-item"    @click=(gotovehiculonuevo)>Registrar Vehiculo</button>
             <hr />
             <button class="dropdown-item logout" @click="handleLogout">Cerrar sesión</button>
           </slot>
@@ -107,7 +108,10 @@ const gotomisreguistrar=()=>{
 
 }
 
+const gotovehiculonuevo=()=>{
+  router.push('/nuevovehiculo')
 
+}
 onBeforeUnmount(() => {
   document.removeEventListener('click', onClickOutside)
 })
@@ -191,7 +195,7 @@ function onClickOutside(e) {
   border-bottom:1px solid #e5e7eb;
 }
 .nav-left{display:flex;align-items:center;gap:16px}
-.brand{font-weight:700;color:#807f7f;text-decoration:none}
+.brand{font-weight:700;color:#000000;text-decoration:none}
 .nav-links{display:flex;gap:12px;list-style:none;margin:0;padding:0}
 .nav-links a{color:#807f7f;text-decoration:none ;font-weight:500}
 
@@ -203,7 +207,7 @@ function onClickOutside(e) {
 .chev{opacity:0.7}
 .dropdown{position:absolute;right:0;top:56px;background:rgb(134, 128, 128);border:1px solid #b97777;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.06);min-width:160px;padding:8px;z-index:50}
 .dropdown-item{display:block;width:100%;text-align:left;padding:8px;border-radius:6px;background:transparent;border:0;cursor:pointer}
-.dropdown-item:hover{background:#180363}
-.logout{color:#b91c1c}
+.dropdown-item:hover{background:#725cc2}
+.logout{color:#000000}
 .login-btn{padding:8px 12px;border-radius:6px;border:1px solid #555686;background:#182597;cursor:pointer;font-weight:600}
 </style>
