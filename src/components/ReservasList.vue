@@ -1,6 +1,7 @@
 <template>
   <div class="p-6">
 
+    <!--PLANTILLA DE AUTOS SOLICITADOS PARA SU APROBACION O RECHAZO DE RENTA "ADMIN"-->
 
     <!-- Mostrar mensaje si no hay reservas -->
     <div v-if="reservas.length === 0" class="text-black">
@@ -31,9 +32,9 @@
         <p><strong>Estado:</strong> 
         
           <span :class="{
-            'text-green-600': reserva.estado === 'Aprobada',
-            'text-yellow-500': reserva.estado === 'Pendiente',
-            'text-red-600': reserva.estado === 'Rechazada'
+            'text-green-600': reserva.estado === 'aprobado',
+            'text-yellow-500': reserva.estado === 'pendiente',
+            'text-red-600': reserva.estado === 'rechazado'
           }">
             {{ reserva.estado }}
 
@@ -52,15 +53,6 @@
 
 
     </div>
-    
-    
-       
-
-      
-
-
-
-
     </div>
 
 
@@ -135,7 +127,7 @@ const cargarReservas = async () => {
       vehiculo:id_vehiculo (marca, modelo, img_url,id_num_economico)
      
     `)
-    .eq('estado','Pendiente')
+    .eq('estado','pendiente')
     .order('id', { ascending: true })
   
 
@@ -154,7 +146,7 @@ async function validar(idReserva,name) {
   try {
     const { error } = await supabase
       .from('reservas')
-      .update({ estado:'Aprobada',aprovado_por:name})
+      .update({ estado:'aprobado',aprovado_por:name})
       .eq('id', idReserva,'id', idReserva)
 
     if (error) throw error

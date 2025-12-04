@@ -61,8 +61,8 @@ const { signUp } = useAuth()
 
 const email = ref('')
 const password = ref('')
-const name = ref('') // ⬅️ Nuevo ref para el nombre
-const confirmPassword = ref('') // ⬅️ Nuevo ref para la confirmación
+const name = ref('')
+const confirmPassword = ref('')
 const error = ref(null)
 const isLoading = ref(false)
 
@@ -70,7 +70,7 @@ const handleSignUp = async () => {
   error.value = null
   isLoading.value = true
   
-  // ⬅️ Agrega la condición para verificar si las contraseñas coinciden
+
   if (password.value !== confirmPassword.value) {
     error.value = 'Las contraseñas no coinciden.'
     isLoading.value = false

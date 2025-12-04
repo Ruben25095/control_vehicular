@@ -1,6 +1,6 @@
 <template>
   <div class="p-6">
-
+    <!--LISTA DE AUTOS GENERALES, INCLUYE APROVADO, FINALIZADO, PENDIENTE, "MIS RESERVAS  "-->
 
     <!-- Mostrar mensaje si no hay reservas -->
     <div v-if="reservas.length === 0" class="text-black">
@@ -31,9 +31,9 @@
         <p><strong>Estado:</strong> 
         
           <span :class="{
-            'text-green-600': reserva.estado === 'Aprobada',
-            'text-yellow-500': reserva.estado === 'Pendiente',
-            'text-red-600': reserva.estado === 'Rechazada'
+            'text-green-600': reserva.estado === 'aprobado',
+            'text-yellow-500': reserva.estado === 'pendiente',
+            'text-red-600': reserva.estado === 'rechazado'
           }">
             {{ reserva.estado }}
 
@@ -43,17 +43,8 @@
 
 
     </div>
-    
-    
-       
-
-      
-
-
-
 
     </div>
-
 
   </div>
 </template>

@@ -31,9 +31,9 @@
         <p><strong>Estado:</strong> 
         
           <span :class="{
-            'text-green-600': reserva.estado === 'Aprobada',
-            'text-yellow-500': reserva.estado === 'Pendiente',
-            'text-red-600': reserva.estado === 'Rechazada'
+            'text-green-600': reserva.estado === 'aprobado',
+            'text-yellow-500': reserva.estado === 'pendiente',
+            'text-red-600': reserva.estado === 'rechazado'
           }">
             {{ reserva.estado }}
 
@@ -153,7 +153,7 @@ const cargarReservas = async () => {
       usuario:usuario_id (name,email),
       vehiculo:id_vehiculo (marca, modelo, img_url,id_num_economico,kilometraje)
     `)
-    .in('estado', ['Aprobada', 'En viaje']) // 👈 Aquí filtras múltiples estados
+    .in('estado', ['aprobado', 'En viaje']) // 👈 Aquí filtras múltiples estados
  
     .order('id', { ascending: true })
 

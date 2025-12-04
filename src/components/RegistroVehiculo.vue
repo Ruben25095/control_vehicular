@@ -1,333 +1,413 @@
 <template>
-     <AppHeader/>
-    <div class="registro-vehiculo-container">
-      <h2>Registrar Nuevo Vehículo</h2>
-      <form @submit.prevent="registrarVehiculo" class="vehiculo-form">
-        
-        <div class="form-group">
-          <label for="id_num_economico">Número Económico:</label>
-          <input type="text" id="id_num_economico" v-model="vehiculo.id_num_economico" required />
+  <AppHeader />
+
+  <div class="registro-vehiculo-container">
+    <h2>Registrar Nuevo Vehículo</h2>
+
+    <form @submit.prevent="onSubmit" class="vehiculo-form" novalidate>
+
+      <!-- Número económico (clave única) -->
+      <div class="form-group">
+        <label for="id_num_economico">Número Económico:</label>
+        <input
+          id="id_num_economico"
+          v-model.trim="vehiculo.id_num_economico"
+          type="text"
+          required
+          :class="{ invalid: validationErrors.id_num_economico }"
+        />
+        <small v-if="validationErrors.id_num_economico" class="field-error">{{ validationErrors.id_num_economico }}</small>
+      </div>
+
+      <!-- Marca, Modelo, Año -->
+      <div class="form-group">
+        <label for="marca">Marca:</label>
+        <input id="marca" v-model.trim="vehiculo.marca" type="text" required :class="{ invalid: validationErrors.marca }" />
+      </div>
+
+      <div class="form-group">
+        <label for="modelo">Modelo:</label>
+        <input id="modelo" v-model.trim="vehiculo.modelo" type="text" required :class="{ invalid: validationErrors.modelo }" />
+      </div>
+
+      <div class="form-group">
+        <label for="year">Año:</label>
+        <input id="year" v-model.number="vehiculo.year" type="number" min="1900" :max="currentYear" required :class="{ invalid: validationErrors.year }" />
+      </div>
+
+      <div class="form-group checkbox-group">
+        <input id="disponible" type="checkbox" v-model="vehiculo.disponible" />
+        <label for="disponible">Disponible</label>
+      </div>
+
+      <div class="form-group">
+        <label for="kilometraje">Kilometraje:</label>
+        <input id="kilometraje" v-model.number="vehiculo.kilometraje" type="number" min="0" required :class="{ invalid: validationErrors.kilometraje }" />
+      </div>
+
+      <div class="form-group">
+        <label for="combustible">Combustible:</label>
+        <input id="combustible" v-model.trim="vehiculo.combustible" type="text" required :class="{ invalid: validationErrors.combustible }" />
+      </div>
+
+      <div class="form-group">
+        <label for="poliza_seguro">Póliza de Seguro (campo libre):</label>
+        <input id="poliza_seguro" v-model.trim="vehiculo.poliza_seguro" type="text" />
+      </div>
+
+      <!-- Upload PDF -->
+      <div class="form-group file-upload-group">
+        <label for="archivo_poliza">Archivo PDF de la póliza (máx 2 MB):</label>
+        <input id="archivo_poliza" type="file" accept="application/pdf" @change="onPdfChange" />
+        <small v-if="pdfName">Archivo: {{ pdfName }}</small>
+        <small v-if="validationErrors.pdf" class="field-error">{{ validationErrors.pdf }}</small>
+      </div>
+
+      <!-- Upload image -->
+      <div class="form-group file-upload-group">
+        <label for="imagen">Imagen del Vehículo (JPG/PNG, máx 2 MB):</label>
+        <input id="imagen" type="file" accept="image/*" @change="onImageChange" />
+        <div v-if="imageUrl" class="image-preview">
+          <img :src="imageUrl" alt="Vista previa" />
+          <p>{{ imageName }}</p>
         </div>
-  
-        <div class="form-group">
-          <label for="marca">Marca:</label>
-          <input type="text" id="marca" v-model="vehiculo.marca" required />
-        </div>
-  
-        <div class="form-group">
-          <label for="modelo">Modelo:</label>
-          <input type="text" id="modelo" v-model="vehiculo.modelo" required />
-        </div>
-  
-        <div class="form-group">
-          <label for="year">Año:</label>
-          <input type="number" id="year" v-model.number="vehiculo.year" required />
-        </div>
-  
-        <div class="form-group checkbox-group">
-          <input type="checkbox" id="disponible" v-model="vehiculo.disponible" />
-          <label for="disponible">Disponible</label>
-        </div>
-  
-        <div class="form-group">
-          <label for="kilometraje">Kilometraje:</label>
-          <input type="number" id="kilometraje" v-model.number="vehiculo.kilometraje" required />
-        </div>
-  
-        <div class="form-group">
-          <label for="combustible">Combustible:</label>
-          <input type="text" id="combustible" v-model="vehiculo.combustible" required />
-        </div>
-  
-        <div class="form-group file-upload-group">
-          <label for="imagen">Imagen del Vehículo:</label>
-          <input type="file" id="imagen" @change="handleFileUpload" accept="image/*" />
-          <div v-if="imageUrl" class="image-preview">
-            <img :src="imageUrl" alt="Vista previa de la imagen" />
-            <p>{{ imageName }}</p>
-          </div>
-        </div>
-  
-        <button type="submit" :disabled="isLoading">
-          {{ isLoading ? 'Registrando...' : 'Registrar Vehículo' }}
-        </button>
-  
-        <p v-if="error" class="error-message">{{ error }}</p>
-        <p v-if="success" class="success-message">{{ success }}</p>
-      </form>
-    </div>
-  </template>
-  
-  <script setup>
-  import { ref } from 'vue';
-  import { supabase } from '@/lib/supabase' // Asegúrate de que la ruta sea correcta
-  import AppHeader from './AppHeader.vue';
-  
-  const vehiculo = ref({
-    id_num_economico: '',
-    marca: '',
-    modelo: '',
-    year: null,
-    disponible: true,
-    kilometraje: null,
-    combustible: '',
-    // img_url se manejará después de la subida de la imagen
-  });
-  
-  const selectedFile = ref(null);
-  const imageUrl = ref('');
-  const imageName = ref('');
-  const isLoading = ref(false);
-  const error = ref(null);
-  const success = ref(null);
-  
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      selectedFile.value = file;
-      imageName.value = file.name;
-      // Crear una URL de objeto para la vista previa local
-      imageUrl.value = URL.createObjectURL(file);
-    } else {
-      selectedFile.value = null;
-      imageUrl.value = '';
-      imageName.value = '';
+        <small v-if="validationErrors.image" class="field-error">{{ validationErrors.image }}</small>
+      </div>
+
+      <!-- Upload status indicators -->
+      <div v-if="uploadStatus.pdf || uploadStatus.image" class="upload-status">
+        <p v-if="uploadStatus.pdf">PDF: {{ uploadStatus.pdf }}</p>
+        <p v-if="uploadStatus.image">Imagen: {{ uploadStatus.image }}</p>
+      </div>
+
+      <!-- Buttons -->
+      <div class="actions">
+        <button type="submit" :disabled="isLoading">{{ isLoading ? 'Registrando...' : 'Registrar Vehículo' }}</button>
+        <button type="button" class="secondary" @click="resetForm" :disabled="isLoading">Limpiar</button>
+      </div>
+
+      <!-- mensajes -->
+      <p v-if="error" class="error-message">{{ error }}</p>
+      <p v-if="success" class="success-message">{{ success }}</p>
+
+    </form>
+  </div>
+</template>
+<script setup>
+import { ref, reactive } from 'vue'
+import { supabase } from '@/lib/supabase'
+import AppHeader from './AppHeader.vue'
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+
+const currentYear = new Date().getFullYear()
+
+// === Estado del formulario ===
+const vehiculo = reactive({
+  id_num_economico: '',
+  marca: '',
+  modelo: '',
+  year: null,
+  disponible: true,
+  kilometraje: null,
+  combustible: '',
+  poliza_seguro: '',
+})
+
+const selectedImage = ref(null)
+const selectedPdf = ref(null)
+const imageUrl = ref('')
+const imageName = ref('')
+const pdfName = ref('')
+
+const isLoading = ref(false)
+const error = ref(null)
+const success = ref(null)
+
+const uploadStatus = reactive({ image: '', pdf: '' })
+
+const validationErrors = reactive({
+  id_num_economico: null,
+  marca: null,
+  modelo: null,
+  year: null,
+  kilometraje: null,
+  combustible: null,
+  image: null,
+  pdf: null,
+})
+
+// === Helpers de limpieza ===
+function clearValidation() {
+  Object.keys(validationErrors).forEach(k => (validationErrors[k] = null))
+}
+
+function resetForm() {
+  vehiculo.id_num_economico = ''
+  vehiculo.marca = ''
+  vehiculo.modelo = ''
+  vehiculo.year = null
+  vehiculo.disponible = true
+  vehiculo.kilometraje = null
+  vehiculo.combustible = ''
+  vehiculo.poliza_seguro = ''
+
+  selectedImage.value = null
+  selectedPdf.value = null
+  imageUrl.value = ''
+  imageName.value = ''
+  pdfName.value = ''
+  uploadStatus.image = ''
+  uploadStatus.pdf = ''
+  clearValidation()
+}
+
+function scheduleClearMessages() {
+  setTimeout(() => {
+    error.value = null
+    success.value = null
+  }, 5000)
+}
+
+// === Validación ===
+function validateForm() {
+  clearValidation()
+  let ok = true
+  if (!vehiculo.id_num_economico) {
+    validationErrors.id_num_economico = 'Número económico requerido.'
+    ok = false
+  }
+  if (!vehiculo.marca) {
+    validationErrors.marca = 'Marca requerida.'
+    ok = false
+  }
+  if (!vehiculo.modelo) {
+    validationErrors.modelo = 'Modelo requerida.'
+    ok = false
+  }
+  if (!vehiculo.year || vehiculo.year < 1900 || vehiculo.year > currentYear + 1) {
+    validationErrors.year = 'Año inválido.'
+    ok = false
+  }
+  if (vehiculo.kilometraje == null || vehiculo.kilometraje < 0) {
+    validationErrors.kilometraje = 'Kilometraje inválido.'
+    ok = false
+  }
+  if (!vehiculo.combustible) {
+    validationErrors.combustible = 'Tipo de combustible requerido.'
+    ok = false
+  }
+  return ok
+}
+
+// === Check duplicado en DB ===
+async function existsIdEconomico(id) {
+  const { data, error: e } = await supabase
+    .from('vehiculos')
+    .select('*')
+    .eq('id_num_economico', id)
+    .limit(1)
+
+  if (e) throw e
+  return data.length > 0
+}
+
+// === Crear nombres de archivo NUEVA ESTRUCTURA ===
+//   id_modelo_marca.ext
+//
+//   ej: 10_civic_honda.pdf
+//
+//   (sin espacios, todo minúscula)
+function buildFileName(id, modelo, marca, originalName) {
+  const cleanModelo = modelo.toLowerCase().replace(/\s+/g, '')
+  const cleanMarca = marca.toLowerCase().replace(/\s+/g, '')
+  const cleanId = String(id).replace(/[^a-zA-Z0-9-_]/g, '_')
+  const ext = originalName.split('.').pop()
+
+  return `${cleanId}_${cleanModelo}_${cleanMarca}.${ext}`
+}
+
+// === Subida genérica ===
+async function uploadFile(bucket, path, file) {
+  const { error: uploadError } = await supabase.storage
+    .from(bucket)
+    .upload(path, file, { upsert: false })
+
+  if (uploadError) throw uploadError
+
+  const { data: publicUrlData } = await supabase.storage
+    .from(bucket)
+    .getPublicUrl(path)
+
+  return publicUrlData.publicUrl
+}
+
+// === Imagen ===
+function onImageChange(e) {
+  const file = e.target.files?.[0]
+  validationErrors.image = null
+  if (!file) return (selectedImage.value = null)
+
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    validationErrors.image = 'Tipo no permitido. JPG/PNG/WebP únicamente.'
+    return
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    validationErrors.image = 'Máximo 2 MB.'
+    return
+  }
+
+  selectedImage.value = file
+  imageName.value = file.name
+  imageUrl.value = URL.createObjectURL(file)
+}
+
+// === PDF ===
+function onPdfChange(e) {
+  const file = e.target.files?.[0]
+  validationErrors.pdf = null
+  if (!file) return (selectedPdf.value = null)
+
+  if (file.type !== 'application/pdf') {
+    validationErrors.pdf = 'Solo PDF'
+    return
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    validationErrors.pdf = 'Máximo 2 MB.'
+    return
+  }
+
+  selectedPdf.value = file
+  pdfName.value = file.name
+}
+
+// === Submit ===
+async function onSubmit() {
+  error.value = null
+  success.value = null
+
+  if (!validateForm()) return
+
+  const confirmed = window.confirm('¿Registrar vehículo?')
+  if (!confirmed) return
+
+  isLoading.value = true
+
+  try {
+    // 1) Duplicado
+    const exists = await existsIdEconomico(vehiculo.id_num_economico)
+    if (exists) throw new Error('Número económico ya registrado.')
+
+    // 2) Subidas
+    let archivo_poliza_url = null
+    let img_url = null
+    const uploads = []
+
+    // PDF → bucket "polizas"
+    if (selectedPdf.value) {
+      const fileName = buildFileName(
+        vehiculo.id_num_economico,
+        vehiculo.modelo,
+        vehiculo.marca,
+        selectedPdf.value.name
+      )
+      const fullPath = fileName
+      uploadStatus.pdf = 'Subiendo...'
+
+      uploads.push(
+        uploadFile('polizas', fullPath, selectedPdf.value)
+          .then(url => {
+            archivo_poliza_url = url
+            uploadStatus.pdf = 'Completado'
+          })
+          .catch(err => {
+            uploadStatus.pdf = 'Error'
+            throw new Error('Error al subir PDF: ' + err.message)
+          })
+      )
     }
-  };
-  
-  const uploadImage = async () => {
-    if (!selectedFile.value) {
-      return null; // No hay archivo para subir
+
+    // Imagen → bucket "vehiculos"
+    if (selectedImage.value) {
+      const fileName = buildFileName(
+        vehiculo.id_num_economico,
+        vehiculo.modelo,
+        vehiculo.marca,
+        selectedImage.value.name
+      )
+      const fullPath = fileName
+      uploadStatus.image = 'Subiendo...'
+
+      uploads.push(
+        uploadFile('vehiculos', fullPath, selectedImage.value)
+          .then(url => {
+            img_url = url
+            uploadStatus.image = 'Completado'
+          })
+          .catch(err => {
+            uploadStatus.image = 'Error'
+            throw new Error('Error al subir imagen: ' + err.message)
+          })
+      )
     }
-  
-    const file = selectedFile.value;
-    const fileName = vehiculo.value.id_num_economico; // Nombre único para el archivo
-    const filePath = `${fileName}`+'jpg'; // Carpeta 'vehiculos' en tu bucket
-  
-    try {
-      const { data, error: uploadError } = await supabase.storage
-        .from('vehiculos') // Asegúrate de que 'vehiculos' sea el nombre de tu bucket
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        });
-  
-      if (uploadError) {
-        throw uploadError;
-      }
-  
-      // Obtener la URL pública de la imagen
-      const { data: publicUrlData } = supabase.storage
-        .from('vehiculos')
-        .getPublicUrl(filePath);
-  
-      if (publicUrlData && publicUrlData.publicUrl) {
-        return publicUrlData.publicUrl;
-      } else {
-        throw new Error('No se pudo obtener la URL pública de la imagen.');
-      }
-  
-    } catch (err) {
-      console.error('Error al subir la imagen:', err.message);
-      error.value = `Error al subir la imagen: ${err.message}`;
-      return null;
+
+    if (uploads.length) await Promise.all(uploads)
+
+    // 3) Insertar en DB
+    const payload = {
+      id_num_economico: vehiculo.id_num_economico,
+      marca: vehiculo.marca,
+      modelo: vehiculo.modelo,
+      year: vehiculo.year,
+      disponible: vehiculo.disponible,
+      kilometraje: vehiculo.kilometraje,
+      combustible: vehiculo.combustible,
+      poliza_seguro: vehiculo.poliza_seguro || null,
+      archivo_poliza_url,
+      img_url,
     }
-  };
-  
-  const registrarVehiculo = async () => {
-    isLoading.value = true;
-    error.value = null;
-    success.value = null;
-  
-    try {
-      let img_url = null;
-      if (selectedFile.value) {
-        img_url = await uploadImage();
-        if (!img_url) {
-          throw new Error('No se pudo completar la subida de la imagen.');
-        }
-      }
-  
-      const { data, error: dbError } = await supabase
-        .from('vehiculos') // Asegúrate de que 'vehiculo' sea el nombre de tu tabla
-        .insert({
-          id_num_economico: vehiculo.value.id_num_economico,
-          marca: vehiculo.value.marca,
-          modelo: vehiculo.value.modelo,
-          year: vehiculo.value.year,
-          disponible: vehiculo.value.disponible,
-          kilometraje: vehiculo.value.kilometraje,
-          combustible: vehiculo.value.combustible,
-          img_url: img_url, // Guarda la URL pública de la imagen
-          // created_at se maneja automáticamente si tu columna tiene `now()` como valor por defecto
-        });
-  
-      if (dbError) {
-        throw dbError;
-      }
-  
-      success.value = 'Vehículo registrado exitosamente!';
-      // Limpiar formulario
-      vehiculo.value = {
-        id_num_economico: '',
-        marca: '',
-        modelo: '',
-        year: null,
-        disponible: true,
-        kilometraje: null,
-        combustible: '',
-      };
-      selectedFile.value = null;
-      imageUrl.value = '';
-      imageName.value = '';
-      // Opcional: emitir un evento si este componente es parte de uno más grande
-      // emit('vehiculoRegistrado', data);
-  
-    } catch (err) {
-      console.error('Error al registrar el vehículo:', err.message);
-      error.value = `Error al registrar el vehículo: ${err.message}`;
-    } finally {
-      isLoading.value = false;
-    }
-  };
-  </script>
-  
-  <style scoped>
-  .registro-vehiculo-container {
-    max-width: 600px;
-    margin: 50px auto;
-    padding: 30px;
-    border-radius: 12px;
-    background-color: #282c34; /* Fondo oscuro */
-    color: #abb2bf; /* Texto claro */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+    const { error: dbError } = await supabase
+      .from('vehiculos')
+      .insert(payload)
+
+    if (dbError) throw dbError
+
+    success.value = 'Vehículo registrado correctamente.'
+    scheduleClearMessages()
+    resetForm()
+
+  } catch (err) {
+    error.value = err.message
+    scheduleClearMessages()
+  } finally {
+    isLoading.value = false
   }
-  
-  h2 {
-    text-align: center;
-    color: #61afef; /* Azul claro */
-    margin-bottom: 30px;
-    font-size: 2em;
-  }
-  
-  .vehiculo-form {
-    display: grid;
-    gap: 20px;
-  }
-  
-  .form-group {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .form-group label {
-    margin-bottom: 8px;
-    font-weight: bold;
-    color: #98c379; /* Verde claro */
-    font-size: 0.95em;
-  }
-  
-  .form-group input[type="text"],
-  .form-group input[type="number"] {
-    padding: 12px 15px;
-    border: 1px solid #3e4451; /* Borde más oscuro */
-    border-radius: 8px;
-    background-color: #3e4451; /* Fondo del input */
-    color: #abb2bf;
-    font-size: 1em;
-    transition: border-color 0.3s, box-shadow 0.3s;
-  }
-  
-  .form-group input[type="text"]:focus,
-  .form-group input[type="number"]:focus,
-  .form-group input[type="file"]:focus {
-    border-color: #61afef;
-    box-shadow: 0 0 0 3px rgba(97, 175, 239, 0.3);
-    outline: none;
-  }
-  
-  .checkbox-group {
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-  }
-  
-  .checkbox-group input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: #e5c07b; /* Amarillo */
-  }
-  
-  .file-upload-group input[type="file"] {
-    background-color: #3e4451;
-    border: 1px dashed #61afef; /* Borde punteado azul */
-    padding: 15px;
-    border-radius: 8px;
-    cursor: pointer;
-    color: #abb2bf;
-    transition: background-color 0.3s;
-  }
-  
-  .file-upload-group input[type="file"]:hover {
-    background-color: #4a505f;
-  }
-  
-  .image-preview {
-    margin-top: 15px;
-    text-align: center;
-    background-color: #3e4451;
-    padding: 15px;
-    border-radius: 8px;
-  }
-  
-  .image-preview img {
-    max-width: 150px;
-    max-height: 150px;
-    border-radius: 8px;
-    object-fit: cover;
-    border: 1px solid #56b6c2; /* Cian */
-    margin-bottom: 10px;
-  }
-  
-  .image-preview p {
-    font-size: 0.9em;
-    color: #56b6c2;
-  }
-  
-  button[type="submit"] {
-    padding: 14px 25px;
-    background-color: #c678dd; /* Púrpura */
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1.1em;
-    font-weight: bold;
-    transition: background-color 0.3s, transform 0.2s;
-  }
-  
-  button[type="submit"]:hover:not(:disabled) {
-    background-color: #d19fe8;
-    transform: translateY(-2px);
-  }
-  
-  button[type="submit"]:disabled {
-    background-color: #5c6370;
-    cursor: not-allowed;
-  }
-  
-  .error-message {
-    color: #e06c75; /* Rojo */
-    text-align: center;
-    margin-top: 15px;
-    font-weight: bold;
-  }
-  
-  .success-message {
-    color: #98c379; /* Verde */
-    text-align: center;
-    margin-top: 15px;
-    font-weight: bold;
-  }
-  </style>
+}
+</script>
+
+
+<style scoped>
+.registro-vehiculo-container { max-width: 680px; margin: 40px auto; padding: 26px; border-radius: 12px; background-color: #282c34; color: #abb2bf; box-shadow: 0 8px 30px rgba(0,0,0,0.35); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+h2 { text-align:center; color: #61afef; margin-bottom: 18px; font-size: 1.8rem }
+.vehiculo-form { display: grid; gap: 14px }
+.form-group { display:flex; flex-direction: column }
+.form-group label { margin-bottom: 6px; font-weight:600; color: #98c379 }
+.form-group input[type="text"], .form-group input[type="number"], .form-group input[type="file"] { padding: 10px 12px; border: 1px solid #3e4451; border-radius: 8px; background: #3e4451; color: #abb2bf }
+.form-group input:focus { border-color: #61afef; box-shadow: 0 0 0 3px rgba(97,175,239,0.2); outline:none }
+.checkbox-group { flex-direction: row; gap: 10px; align-items:center }
+.file-upload-group input[type="file"] { border: 1px dashed #61afef; padding: 10px; border-radius: 8px }
+.image-preview { margin-top: 10px; background:#3e4451; padding:10px; border-radius:8px; text-align:center }
+.image-preview img { max-width:140px; max-height:140px; object-fit:cover; border-radius:8px; border:1px solid #56b6c2 }
+.actions { display:flex; gap:10px }
+button { padding: 12px 18px; border-radius:8px; border:none; cursor:pointer; font-weight:700 }
+button:disabled { opacity:0.65; cursor:not-allowed }
+button[type="submit"] { background:#c678dd; color:#fff }
+button.secondary { background:#4a505f; color:#fff }
+.error-message { color:#e06c75; text-align:center; font-weight:700 }
+.success-message { color:#98c379; text-align:center; font-weight:700 }
+.field-error { color:#e5c07b; margin-top:6px; font-size:0.9rem }
+.invalid { box-shadow: 0 0 0 3px rgba(224,108,117,0.08); border-color: #e06c75 }
+.upload-status p { font-size:0.95rem; color:#abb2bf }
+</style>
