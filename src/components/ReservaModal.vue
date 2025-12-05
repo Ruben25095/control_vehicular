@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase'
 import {useAuth} from '@/components/useAuth'
 
 import { VueDatePicker } from '@vuepic/vue-datepicker';
-
+ 
 import '@vuepic/vue-datepicker/dist/main.css'
 
 
@@ -404,7 +404,6 @@ errorMessage.value = `Error al crear la reserva: ${err.message}`
 
 } finally {
 
-
 isSubmitting.value = false
 
 
@@ -417,169 +416,246 @@ isSubmitting.value = false
 </script>
 
 <template>
-
-<div v-if="isOpen" class="fixed inset-0 bg-gray-400 bg-opacity-40 flex justify-center items-center placce-cente z-50">
-
-<div class="flex flex-col bg-white rounded-2xl shadow-xl p-6 w-1/4 h-9/12 relative">
-
-<!-- Botón de cerrar -->
-
-<button @click="closeModal" class="absolute top-3 text-3xl right-3 text-red-500 hover:text-blue-700">
-
-✕
-
-</button>
-
-
-<h2 class="flex justify-center text-2xl text-black font-bold mb-4 text-center">Nueva Solicitud de Salida</h2>
-
-<div class="w-full flex flex-col items-center mb-4">
-
-<img :src="vehiculo.img_url" alt="Ícono de vehículo" class="flex w-2/4 h-3/4 mb-2" />
-
-
-<h1 class="text-black text-2xl">{{currentUser.email}}</h1>
-
-
-
-<h1 class="text-black text-2xl">{{ vehiculo.id_num_economico }}</h1>
-
-
-</div>
-
-<!-- Fecha inicio -->
-
-<label class="block text-black font-semibold mb-1">Fecha de Salida</label>
-
-<VueDatePicker
-
-v-model="fecha_inicio"
-
-:disabled-dates="fechasBloqueadas"
-
-format="yyyy-MM-dd"
-
-:min-date="hoy"
-
-:enable-time-picker="false"
-
-class="w-11/12"
-
-/>
-
-
-
-<!-- Fecha fin -->
-
-<label class="block text-black font-semibold mb-1">Fecha final</label>
-
-<VueDatePicker
-
-v-model="fecha_fin"
-
-:disabled-dates="fechasBloqueadas"
-
-format="yyyy-MM-dd"
-
-:min-date="hoy"
-
-:enable-time-picker="false"
-
-class="w-11/12"
-
-/>
-
-<p v-if="errorRangoFechas" class="text-red-500 text-center font-semibold mt-2">
-
-{{ errorRangoFechas }}
-
-</p>
-
-
-
-<p v-if="errorMessage" class="text-red-600 text-center font-bold mt-2">
-
-{{ errorMessage }}
-
-</p>
-
-<p v-if="successMessage" class="text-green-600 text-center font-bold mt-2">
-
-{{ successMessage }}
-
-</p>
-
-
-
-
-
-<!-- Motivo -->
-
-<div class="flex flex-col items-center">
-
-<label class="block text-black font-semibold mb-1">Motivo</label>
-
-<textarea v-model="motivo" rows="3" cols="50" maxlength="120" class="w-11/12 h-full text-black border-2 border-blue-600 rounded-lg px-3 py-2 text-2xl focus:outline-none focus:ring focus:ring-blue-300"
-
-placeholder="Describe el motivo de la reserva..." required></textarea>
-
-</div>
-
-
-
-<!-- Botón enviar -->
-
-<div class="flex w-full h-20 justify-center-safe my-15 mx-20 place-items-center-safe">
-
-<button :disabled="isLoading" @click="realizarReserva" class="flex justify-center items-center w-40 h-10 bg-blue-600 hover:bg-lime-400 text-white hover:text-black rounded-lg">
-
-{{ isLoading ? 'Cargando...' : 'Enviar Solicitud' }}
-
-</button>
-
-</div>
-
-
-</div>
-
-</div>
-
+  <div 
+    v-if="isOpen" 
+    class="modal-backdrop"
+  >
+    <div class="modal-container">
+
+      <!-- Botón cerrar -->
+      <button @click="closeModal" class="btn-close">✕</button>
+
+      <!-- Título -->
+      <h2 class="modal-title">Nueva Solicitud de Salida</h2>
+
+      <!-- Imagen + datos -->
+      <div class="info-section">
+        <img :src="vehiculo.img_url" alt="Vehículo" class="vehiculo-img"/>
+        
+        <div class="data-section">
+          <p class="label">ECONÓMICO:</p>
+          <p class="value">{{ vehiculo.id_num_economico }}</p>
+
+          <p class="label mt-2">USUARIO:</p>
+          <p class="value text-truncate">{{ currentUser.email }}</p>
+        </div>
+      </div>
+
+      <!-- Fechas -->
+      <div class="form-section">
+        <label>Fecha de Salida</label>
+        <VueDatePicker
+          v-model="fecha_inicio"
+          :disabled-dates="fechasBloqueadas"
+          format="yyyy-MM-dd"
+          :min-date="hoy"
+          :enable-time-picker="false"
+          dark
+          class="carbon-picker"
+        />
+
+        <label>Fecha final</label>
+        <VueDatePicker
+          v-model="fecha_fin"
+          :disabled-dates="fechasBloqueadas"
+          format="yyyy-MM-dd"
+          :min-date="hoy"
+          :enable-time-picker="false"
+          dark
+          class="carbon-picker"
+        />
+
+        <!-- Mensajes -->
+        <p v-if="errorRangoFechas" class="msg error">{{ errorRangoFechas }}</p>
+        <p v-if="errorMessage" class="msg error">{{ errorMessage }}</p>
+        <p v-if="successMessage" class="msg success">{{ successMessage }}</p>
+      </div>
+
+      <!-- Motivo -->
+      <div class="form-section">
+        <label>Motivo</label>
+        <textarea 
+          v-model="motivo"
+          maxlength="120"
+          class="carbon-input"
+          placeholder="Describe el motivo de la reserva..."
+          required
+        ></textarea>
+      </div>
+
+      <!-- Botón -->
+      <div class="modal-footer">
+        <button
+          :disabled="isLoading"
+          @click="realizarReserva"
+          class="btn-submit"
+          :class="{ loading: isLoading }"
+        >
+          {{ isLoading ? 'Cargando...' : 'Enviar Solicitud' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
 </template>
 
 
 
+
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
 
-/* Opcional: animación de aparición */
-
-
-
-div[role="dialog"] {
-
-animation: fadeIn 0.2s ease-in-out;
-
+:root {
+  --carbon-bg: #1b1b1b;
+  --carbon-card: #252525;
+  --text-white: #fff;
+  --text-gray: #bdbdbd;
+  --accent-red: #ff3b30;
+  --accent-blue: #3b82f6;
+  --border: #333;
 }
 
-
-
-@keyframes fadeIn {
-
-from {
-
-opacity: 0;
-
-transform: scale(0.95);
-
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
 }
 
-to {
-
-opacity: 1;
-
-transform: scale(1);
-
+.modal-container {
+  background: var(--carbon-card);
+  color: var(--text-white);
+  width: 95%;
+  max-width: 430px;
+  padding: 24px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  box-shadow: 0 0 40px rgba(0,0,0,0.6);
+  position: relative;
 }
 
+/* Cerrar */
+.btn-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 1.6rem;
+  cursor: pointer;
+  transition: .2s;
+}
+.btn-close:hover {
+  color: var(--accent-red);
 }
 
+/* Título */
+.modal-title {
+  text-align: center;
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.6rem;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+/* Info vehículo */
+.info-section {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  background: #1f1f1f;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.vehiculo-img {
+  width: 90px;
+  height: 70px;
+  object-fit: contain;
+}
+.data-section .label {
+  font-family: 'Oswald', sans-serif;
+  color: #ccc;
+  font-size: 0.8rem;
+}
+.data-section .value {
+  font-family: 'Roboto';
+  font-size: 1rem;
+}
+.text-truncate {
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Formularios */
+.form-section label {
+  color: var(--text-gray);
+  font-size: 0.9rem;
+  margin: 4px 0;
+  display: block;
+  font-family: 'Roboto';
+}
+
+.carbon-input {
+  width: 100%;
+  background: #202020;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 12px;
+  color: white;
+  font-size: 1rem;
+  resize: none;
+  transition: .2s;
+}
+.carbon-input:focus {
+  border-color: var(--accent-red);
+}
+
+.msg { text-align: center; margin-top: 6px; font-size: .9rem; }
+.msg.error { color: #ff3b30; }
+.msg.success { color: #22c55e; }
+
+/* Footer */
+.modal-footer {
+  margin-top: 22px;
+}
+
+.btn-submit {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--accent-blue);
+  border: none;
+  color: white;
+  text-transform: uppercase;
+  font-family: 'Oswald';
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: .2s;
+}
+.btn-submit:hover {
+  background: #2563eb;
+}
+.btn-submit.loading,
+.btn-submit:disabled {
+  background: #555;
+  cursor: not-allowed;
+}
+
+/* Datepicker - modo oscuro */
+:deep(.dp__theme_dark) {
+  --dp-background-color: #2a2a2a;
+  --dp-text-color: white;
+  --dp-hover-color: #333;
+  --dp-primary-color: var(--accent-blue);
+}
 </style>
