@@ -1,91 +1,115 @@
 <template>
-  <div class="p-6">
-
-    <!--PLANTILLA DE AUTOS SOLICITADOS PARA SU APROBACION O RECHAZO DE RENTA "ADMIN"-->
-
-    <!-- Mostrar mensaje si no hay reservas -->
-    <div v-if="reservas.length === 0" class="text-black">
-      No hay reservas registradas.
-    </div>
-
-    <!-- Lista de reservas -->
-    <div v-else class="grid gap-4 md:grid-cols-2 place-items-center-safe lg:grid-cols-4">
-      <div
-        v-for="reserva in reservas"
-        :key="reserva.id"
-        class="bg-gray-100 w-11/12  text-black place-items-center rounded-xl shadow-md p-4 hover:shadow-lg transition"
-      >
-        <h3 class=" w-full text-center bg-sky-300 font-semibold  text-lg mb-2 p-1 rounded">
-          Reserva #{{ reserva.id }}
-        </h3>
-        
-        <p><strong>No.Economico:</strong> {{  reserva.vehiculo?.id_num_economico || 'Desconocido' }}</p>
-       
-        <div v-if="reserva.vehiculo?.img_url" class="flex justify-center my-2">
-          <img :src="reserva.vehiculo.img_url" alt="Vehículo" class="w-32 h-24 object-cover rounded-lg" />
-        </div>
-        <p><strong>Solicita:</strong> {{ reserva.usuario?.nombre || reserva.usuario?.name || 'Desconocido' }}</p>
-        <p><strong>Vehículo:</strong> {{ reserva.vehiculo?.marca }} {{ reserva.vehiculo?.modelo }}</p>
-        <p><strong>Fecha inicio:</strong> {{ formatFecha(reserva.fecha_inicio) }}</p>
-         <p><strong>Fecha fin:</strong> {{ formatFecha(reserva.fecha_fin) }}</p>
-        <p class="overflow-hidden w-80 ..."><strong>Motivo:</strong> {{ reserva.motivo }}</p> 
-        <p><strong>Estado:</strong> 
-        
-          <span :class="{
-            'text-green-600': reserva.estado === 'aprobado',
-            'text-yellow-500': reserva.estado === 'pendiente',
-            'text-red-600': reserva.estado === 'rechazado'
-          }">
-            {{ reserva.estado }}
-
+    <div class="list-container">
   
-          </span>
-      </p>
+      <div v-if="reservas.length === 0" class="no-reservations">
+        No hay solicitudes de reserva pendientes.
+      </div>
+  
+      <div v-else class="reservations-grid">
+        <div
+          v-for="reserva in reservas"
+          :key="reserva.id"
+          class="reservation-card group"
+        >
+          <h3 class="card-title">
+            Solicitud #{{ reserva.id }}
+          </h3>
+          
+          <div class="card-content">
+              
+              <div v-if="reserva.vehiculo?.img_url" class="card-image-wrapper">
+                <img :src="reserva.vehiculo.img_url" alt="Vehículo" class="card-image" />
+              </div>
 
-         <div class=" flex flex-row w-full place-items-center justify-around ">
+              <div class="details-section">
+                
+                <p class="detail-item">
+                  <span class="detail-label">Económico:</span> 
+                  <span class="detail-value">{{  reserva.vehiculo?.id_num_economico || 'Desconocido' }}</span>
+                </p>
+                
+                <p class="detail-item">
+                  <span class="detail-label">Solicita:</span> 
+                  <span class="detail-value">{{ reserva.usuario?.nombre || reserva.usuario?.name || 'Desconocido' }}</span>
+                </p>
+                
+                <p class="detail-item">
+                  <span class="detail-label">Vehículo:</span> 
+                  <span class="detail-value">{{ reserva.vehiculo?.marca }} {{ reserva.vehiculo?.modelo }}</span>
+                </p>
+                
+                <p class="detail-item date-info">
+                  <span class="detail-label">Inicio:</span> 
+                  <span class="detail-value">{{ formatFecha(reserva.fecha_inicio) }}</span>
+                </p>
+                
+                 <p class="detail-item date-info">
+                   <span class="detail-label">Fin:</span> 
+                   <span class="detail-value">{{ formatFecha(reserva.fecha_fin) }}</span>
+                 </p>
+                
+              </div>
+          </div>
+          
+          <div class="motivo-box">
+             <span class="label">Motivo:</span> 
+             <span class="motivo-text">{{ reserva.motivo }}</span> 
+          </div>
 
-               <button @click="validar(reserva.id,currentUser.name)" class="flex p-6 h-1/4 w-1/4 border-2 justify-center bg-green-500 hover:bg-yellow-300">Aceptar</button>
-
-
-               <button @click="rechazar(reserva.id,currentUser.name)" class="flex p-6 h-1/4 w-1/4 border-2 justify-center bg-red-500 hover:bg-yellow-300">Rechazar</button>
-
-         </div>
-
-
+          <p class="detail-item state-label">
+            <span class="detail-label">Estado:</span> 
+            <span class="state-text state-pending">
+              {{ reserva.estado }}
+            </span>
+          </p>
+  
+           <div class="action-buttons">
+  
+                 <button 
+                    @click="validar(reserva.id,currentUser.name)" 
+                    class="btn-action btn-accept"
+                 >
+                    Aprobar
+                 </button>
+  
+                 <button 
+                    @click="rechazar(reserva.id,currentUser.name)" 
+                    class="btn-action btn-reject"
+                 >
+                    Rechazar
+                 </button>
+  
+           </div>
+  
+      </div>
+      </div>
+  
     </div>
-    </div>
-
-
-  </div>
 </template>
-
+  
 <script setup>
 import { ref, onMounted,computed,watchEffect } from 'vue'
 import { supabase } from '@/lib/supabase'
 import {useAuth} from '@/components/useAuth'
-const reservas = ref([])
 
-// Dentro de tu componente o script donde defines currentUser
+const reservas = ref([])
 const { user } = useAuth()
-const usuario= ref(null) // Usaremos una ref para almacenar el nombre
+const usuario= ref(null) 
+const errorMsg = ref('')
 
 watchEffect(async () => {
   if (user.value) {
-    // 1. Obtener el ID del usuario autenticado
     const userId = user.value.id
-    
-    // 2. Realizar la consulta a la tabla 'profiles'
     const { data, error } = await supabase
-      .from('profiles') // Tu tabla de perfiles
-      .select('name') // La columna que contiene el nombre
-      .eq('id', userId) // Asume que la columna ID de 'profiles' se llama 'id' y es igual al ID de auth
-      .single() // Esperamos un solo resultado
+      .from('profiles') 
+      .select('name') 
+      .eq('id', userId) 
+      .single() 
 
     if (error) {
       console.error('Error al obtener el perfil:', error)
-      usuario.value = 'Error'
+      usuario.value = 'Sin Nombre (DB Error)'
     } else if (data) {
-      // 3. Almacenar el nombre obtenido
       usuario.value = data.name
     }
   } else {
@@ -95,11 +119,7 @@ watchEffect(async () => {
 
 const currentUser = computed(() => {
   if (!user.value) return null
-  
-  // Opción 1: Priorizar el nombre de la base de datos (nameFromDB)
-  const nombre = usuario.value || 'Sin nombre'
-  
-  
+  const nombre = usuario.value || user.value.email.split('@')[0] || 'Admin' 
   return {
     name: nombre, 
     email: user.value.email,
@@ -107,10 +127,8 @@ const currentUser = computed(() => {
   }
 })
 
-console.log(currentUser.name)
-
 function formatFecha(fecha) {
-  return new Date(fecha).toLocaleDateString()
+  return new Date(fecha).toLocaleDateString('es-MX')
 }
 
 const cargarReservas = async () => {
@@ -138,19 +156,14 @@ const cargarReservas = async () => {
   }
 }
 
-
-const errorMsg = ref('')
-
 async function validar(idReserva,name) {
-
   try {
     const { error } = await supabase
       .from('reservas')
-      .update({ estado:'aprobado',aprovado_por:name})
-      .eq('id', idReserva,'id', idReserva)
+      .update({ estado:'aprobado', aprovado_por: name})
+      .eq('id', idReserva)
 
     if (error) throw error
-    console.log(idReserva)
     await cargarReservas()
   } catch (err) {
     console.error('Error al aprobar reserva:', err)
@@ -162,7 +175,7 @@ async function rechazar(idReserva,name) {
   try {
     const { error } = await supabase
       .from('reservas')
-      .update({ estado: 'Rechazada',aprovado_por:name })
+      .update({ estado: 'rechazado', aprovado_por: name })
       .eq('id', idReserva)
 
     if (error) throw error
@@ -180,3 +193,205 @@ onMounted(() => {
  
 })
 </script>
+
+<style scoped>
+/* PALETA DE VehiculoCard.vue */
+/*
+   Fondo: #1C1C1C (Gris Fibra de Carbono)
+   Texto Claro: #FFFFFF (Blanco Nítido)
+   Texto Secundario: #BDBDBD (Gris Acero)
+   Acento: #FF3B30 (Rojo Deportivo)
+   Borde: #333333 (Gris Muy Oscuro)
+*/
+
+/* === CONTENEDOR PRINCIPAL === */
+.list-container {
+  background: #1C1C1C; 
+  padding: 24px;
+  min-height: 100vh;
+}
+
+.no-reservations {
+  color: #FFFFFF; 
+  text-align: center;
+  font-size: 1.2rem;
+  padding: 20px;
+}
+
+/* === GRID DE RESERVAS === */
+.reservations-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  justify-items: center;
+}
+
+/* === TARJETA INDIVIDUAL === */
+.reservation-card {
+  /* Fondo oscuro: Fibra de Carbono */
+  background: #1C1C1C; 
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); 
+  border: 1px solid #333333; 
+  width: 100%;
+  max-width: 400px;
+  padding: 16px;
+  position: relative;
+  transition: all 0.3s ease; /* Transición original de la card */
+}
+
+.reservation-card:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6); 
+  transform: translateY(-2px); /* Efecto hover original */
+}
+
+/* Título */
+.card-title {
+  /* Rojo Deportivo para el encabezado */
+  background: #FF3B30; 
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin-bottom: 12px;
+  padding: 6px;
+  border-radius: 6px;
+  text-align: center;
+  letter-spacing: 0.5px;
+  /* La fuente se mantendrá la predeterminada del sistema o la que hayas definido globalmente */
+}
+
+.card-content {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+/* Imagen */
+.card-image-wrapper {
+  flex-shrink: 0;
+  background: #000000; /* Fondo negro de la zona de imagen de la card original */
+  border-radius: 6px;
+}
+
+.card-image {
+  width: 100px;
+  height: 80px;
+  object-fit: contain;
+  border-radius: 6px;
+  padding: 4px;
+}
+
+/* Detalles */
+.details-section {
+    flex-grow: 1;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+}
+
+.detail-label {
+  /* Gris Acero para etiquetas */
+  color: #BDBDBD; 
+  font-weight: 400;
+  flex-basis: 40%;
+}
+
+.detail-value {
+  /* Blanco Nítido para valores */
+  color: #FFFFFF; 
+  font-weight: 600;
+  text-align: right;
+  flex-basis: 60%;
+}
+
+/* Motivo (Separado y en bloque) */
+.motivo-box {
+    background: #000000; /* Negro sólido para el fondo del motivo */
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #333333;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+
+.motivo-box .label {
+    font-weight: 700;
+    color: #FF3B30; /* Acento rojo para la etiqueta */
+    display: block;
+    margin-bottom: 4px;
+}
+
+.motivo-text {
+    color: #FFFFFF;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Estado (Pendiente) */
+.state-label {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #333333;
+  justify-content: center;
+}
+
+.state-text {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Colores de estado: Usamos el amarillo de estado original */
+.state-pending { color: #facc15; } /* Amarillo */
+
+
+/* === BOTONES DE ACCIÓN === */
+.action-buttons {
+  display: flex;
+  justify-content: space-around;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.btn-action {
+  flex-grow: 1;
+  border: none;
+  color: #FFFFFF;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 8px; 
+  padding: 10px 0;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); 
+}
+
+/* Botón Aceptar (Verde, como el fuel-full) */
+.btn-accept {
+  background: #22c55e;
+}
+
+.btn-accept:hover {
+  background: #16a34a; 
+}
+
+/* Botón Rechazar (Rojo Deportivo) */
+.btn-reject {
+  background: #FF3B30; 
+}
+
+.btn-reject:hover {
+  background: #cc2f26; 
+}
+</style>
