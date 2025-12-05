@@ -169,7 +169,7 @@ onMounted(() => {
 :root {
   --carbon-dark: #1c1c1c; /* Gris Fibra de Carbono (Fondo) */
   --carbon-text: #ffffff; /* Blanco Nítido (Texto Primario) */
-  --carbon-secondary: #bdbdbd; /* Gris Acero (Texto Secundario) */
+  --carbon-secondary: #9e0404; /* Gris Acero (Texto Secundario) */
   --performance-red: #ff3b30; /* Rojo Deportivo (Acento/CTA) */
 }
 
@@ -199,10 +199,11 @@ onMounted(() => {
   font-size: 1.125rem; /* text-lg */
   /* CAMBIO: Usamos Oswald para los títulos y contadores */
   font-family: 'Oswald', sans-serif; 
-  font-weight: 600;
+  font-weight: 900;
   /* CAMBIO: Gris Acero para texto secundario */
-  color: var(--carbon-secondary); 
+  color: var(--carbon-secondary);  
   text-transform: uppercase;
+   color: #250401; /* turquesa */
 }
 
 .contador .count {
