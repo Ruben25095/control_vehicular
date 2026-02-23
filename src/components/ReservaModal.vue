@@ -80,16 +80,16 @@ return dias // ahora es Date[]
 
 
 onMounted(async () => {
+ 
+// console.log("🔹 Modal mounted, vehículo recibido desde props:")
 
-console.log("🔹 Modal mounted, vehículo recibido desde props:")
-
-console.log(props.vehiculo)
+// console.log(props.vehiculo)
 
 
 
-console.log("🔹 ID del vehículo para consulta:")
+// console.log("🔹 ID del vehículo para consulta:")
 
-console.log(props.vehiculo.id_vehiculo)
+// console.log(props.vehiculo.id_vehiculo)
 
 
 
@@ -117,11 +117,11 @@ const { data: reservas, error } = await supabase
 
 
 
-console.log("🔹 Respuesta de Supabase:")
+// console.log("🔹 Respuesta de Supabase:")
 
-console.log("reservas:", reservas)
+// console.log("reservas:", reservas)
 
-console.log("error:", error)
+// console.log("error:", error)
 
 
 
@@ -135,11 +135,11 @@ const rango = generarRangoDias(r.fecha_inicio, r.fecha_fin)
 
 dias = dias.concat(rango)
 
-console.log("🔸 Rango generado:", rango)
+//console.log("🔸 Rango generado:", rango)
 
 })
 
-console.log("🔹 Lista de fechas concatenadas antes de guardar:", dias)
+//console.log("🔹 Lista de fechas concatenadas antes de guardar:", dias)
 
 
 
@@ -147,11 +147,11 @@ fechasBloqueadas.value=dias
 
 
 
-console.log("✅ Fechas convertidas a Date para datepicker:", fechasBloqueadas.value)
+//console.log("✅ Fechas convertidas a Date para datepicker:", fechasBloqueadas.value)
 
 }else {
 
-console.log("⚠ No hubo reservas aprobadas o hubo error")
+//console.log("⚠ No hubo reservas aprobadas o hubo error")
 
 }
 

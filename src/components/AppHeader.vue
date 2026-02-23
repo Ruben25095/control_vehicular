@@ -13,7 +13,7 @@
           <span class="action-chip" @click="gotoadmin">Admin</span>
           <span class="action-chip" @click="gotosalidas">Salidas</span>
           <span class="action-chip" @click="gotomisreservas">Mis Reservas</span>
-          <span class="action-chip" @click="gotomisreguistrar">Registrar</span>
+          <span v-show="auth.role==='Admin'" class="action-chip" @click="gotomisreguistrar">Registrar</span>
           <span class="action-chip" @click="gotovehiculonuevo">Vehículo Nuevo</span>
         </div>
 
@@ -28,9 +28,9 @@
 
       </template>
 
-      <template v-else>
-        <button class="login-btn" @click="goToLogin">Iniciar sesión</button>
-      </template>
+      <!-- <template v-else>
+        <button class="login-btn" @click="goToLogin" >Iniciar sesión</button>
+      </template> -->
 
     </div>
   </nav>
@@ -41,18 +41,55 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { supabase } from '@/lib/supabase'  // importa el cliente
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import Admin from '@/views/Admin.vue'
 const router = useRouter()
-
+const perfilUser = ref([])  
 
 const auth = useAuthStore()
 
-const isAdmin = computed(() => auth.role === 'Admin')
+//const isAdmin = computed(() => auth.role === 'Admin')
 
+// async function fetchMyProfile() {
+//   // Primero obtenemos el ID de la sesión actual
+//   const { data: { user } } = await supabase.auth.getUser();
+
+//   if (user) {
+//     const { data, error } = await supabase
+//       .from('profiles')
+//       .select('name, email, role, img_avatar_url')
+//       .eq('id', user.id)
+//       .single(); // .single() porque solo esperamos un resultado
+//     if (error) console.error(error);
+//     console.log("Perfil obtenido:",data);
+//     return data; // Devolvemos el perfil para uso inmediato
+//   }
+// }
+
+
+ 
 function goToLogin() {
   router.push('/login') 
 // redirige directamente
 }
-
+computed(() => {
+  if (auth.isAuthenticated) {
+    // Si ya estamos autenticados, obtenemos el perfil
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        supabase
+          .from('profiles')
+          .select('name, email, role, img_avatar_url')
+          .eq('id', user.id)
+          .single()
+          .then(({ data, error }) => {
+            if (error) console.error(error);
+            perfilUser.value = data; // Guardamos el perfil en la ref
+            console.log("Perfil del usuario:", perfilUser.value);
+          });
+      }
+    });
+  }
+})
 
 
 
@@ -66,23 +103,21 @@ const menuOpen = ref(false)
 const userBtn = ref(null)
 const supaUser = ref(null) // usuario autenticado desde Supabase
 
-// --- Verificar sesion activa ---
+
 onMounted(async () => {
 
-
+ 
   const { data: { session } } = await supabase.auth.getSession()
   supaUser.value = session?.user ?? null
-  console.log(isAdmin)
-  // Escuchar cambios en la sesión
-  supabase.auth.onAuthStateChange((_event, session) => {
-    supaUser.value = session?.user ?? null
-  })
+  
+
 
   document.addEventListener('click', onClickOutside)
 })
 
 const gotoadmin=()=>{
   router.push('/admin')
+  console.log(currentUser.value)
 
 }
 const gotosalidas=()=>{
@@ -106,8 +141,14 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', onClickOutside)
 })
 
+  
+
+ console.log("Perfil del usuario en AppHeader:", perfilUser.value) // Verificar que se obtiene el perfil correctamente
+  
+
 // --- Computed para mostrar el usuario ---
 const currentUser = computed(() => {
+  
   // Prioridad: prop → supabase → localStorage → null
   if (props.user) return props.user
   if (supaUser.value) {
@@ -144,6 +185,7 @@ function onClickOutside(e) {
   if (!userBtn.value) return
   if (!userBtn.value.contains(e.target)) closeMenu()
 }
+
 
 
 

@@ -1,10 +1,14 @@
 <template>
-   <AppHeader/>     
-  <div class=" bg-black login-container">
-    <h2>Iniciar Sesión</h2>
+
+   <AppHeader/>  
+
+   <main class="flex flex-col items-center justify-start min-h-screen bg-gray-600 main"> 
+  <div class="flex flex-col justify-center bg-white   login-container   ">
+    <h2 class="flex flex-col items-center font-bold   text-black text-4xl">Iniciar Sesión</h2>
     
-    <form @submit.prevent="handleLogin">
-      <div>
+ 
+    <form  @submit.prevent="handleLogin">
+      <div >
         <input 
           v-model="email" 
           type="email" 
@@ -21,20 +25,27 @@
           required
         />
       </div>
-      
-      <button type="submit" :disabled="isLoading">
+      <div class="flex flex-col items-center">
+      <button   type="submit" :disabled="isLoading">
         {{ isLoading ? 'Cargando...' : 'Iniciar Sesión' }}
       </button>
+      </div>
     </form>
-
+     <div class="flex flex-col  items-center  justify-center forgot-password-link"> ">
     <p v-if="error" class="error">{{ error }}</p>
-    
-    <p>
+  
+
+   
+       <p class="text-black">
       ¿No tienes cuenta? 
       
       <router-link to="/forgot-password">Recuperar contraseña</router-link>
     </p>
+    </div>
+   
   </div>
+  
+  </main> 
 </template>
 
 <script setup>
@@ -73,27 +84,49 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-.login-container {
-  max-width: 400px;
-  margin: 50px auto;
-  padding: 20px;
+.main {
+   min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content:flex-start;
+    padding-top: 100px;
+    padding-left: 40px;
+    padding-right: 40px;
+    background: linear-gradient(135deg, #8e91a8 0%, #000000 100%);
+  
+  
 }
-
+.login-container {
+   background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    max-width: 450px;
+    max-height: 600px;
+    width: 100%;
+    height: 100%;
+  
+}
+forgor-password-link {
+  margin-top: 20px;
+}
 input {
   width: 100%;
   padding: 10px;
   margin: 10px 0;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 20px;
+  color : black;
 }
 
 button {
-  width: 100%;
-  padding: 10px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
+  width: 70%;
+  border-radius: 50px;
+ 
+  background-color: #e03011;
+  color: black;
+  border: 10px solid #e03011;
+  border-radius: 15px;
   cursor: pointer;
 }
 
