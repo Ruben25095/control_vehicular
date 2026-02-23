@@ -3,7 +3,7 @@ name: Build & Deploy SPA
 on:
   push:
     branches:
-      - main
+      - caballero
 
 jobs:
   build-deploy:
