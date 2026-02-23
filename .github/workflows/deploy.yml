@@ -27,7 +27,7 @@ jobs:
       - name: 🚀 Subir dist al VPS
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: 191.101.1.146
+          host: 191.101.1.146:6125
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 6125
