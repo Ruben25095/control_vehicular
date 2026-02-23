@@ -24,14 +24,14 @@ jobs:
       - name: 🏗️ Build producción
         run: npm run build
 
-      - name: 🚀 Subir dist al VPS
+      - name:  Subir dist al VPS
         uses: appleboy/scp-action@master
         with:
           host: 191.101.1.146
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          port: 6125 # Asegúrate de que no haya espacios después del número
+          port: 6125
           source: "dist/*"
           target: "/var/www/control_vehicular"
-          strip_components: 1 # Opcional: para que no cree la carpeta 'dist' dentro de la ruta
           rm: true
+          strip_components: 1
